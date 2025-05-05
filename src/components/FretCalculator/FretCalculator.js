@@ -12,7 +12,8 @@ import {
   mmToInches, 
   inchesToMm, 
   calculateFretPositions,
-  calculateBridgeWidth
+  calculateBridgeWidth,
+  calculateStringEdgePadding
 } from '../../utils/fretCalculator/calculationUtils';
 
 /**
@@ -38,6 +39,12 @@ const FretCalculator = () => {
   const [shareUrl, setShareUrl] = useState('');
   const [isCustom, setIsCustom] = useState(false);
   const [calculatedBridgeWidth, setCalculatedBridgeWidth] = useState(0);
+  
+  // Calculate parameters based on string spacing
+  const [nutStringSpacing, setNutStringSpacing] = useState(
+    // Initialize with a reasonable default value
+    instrumentPresets[0].stringSpacing.mm * 0.9
+  );
   
   // Update instrument presets when language changes
   useEffect(() => {
@@ -160,11 +167,28 @@ const FretCalculator = () => {
     loadParamsFromUrl();
   }, []);
   
-  // Calculate bridge width based on string spacing
+  // Calculate parameters based on string spacing
   useEffect(() => {
-    const calculatedWidth = calculateBridgeWidth(stringSpacing, stringsNumber);
+    // Convert to mm for calculations if needed
+    const stringSpacingMm = units === 'mm' ? stringSpacing : inchesToMm(stringSpacing);
+    const neckWidthMm = units === 'mm' ? neckWidth : inchesToMm(neckWidth);
+    
+    // Calculate bridge width
+    const calculatedWidthMm = calculateBridgeWidth(stringSpacingMm, stringsNumber);
+    
+    // Convert back to inches if needed
+    const calculatedWidth = units === 'mm' ? calculatedWidthMm : mmToInches(calculatedWidthMm);
     setCalculatedBridgeWidth(calculatedWidth);
-  }, [stringSpacing, stringsNumber]);
+    
+    // Calculate nut string spacing for parallel strings
+    const edgePadding = calculateStringEdgePadding(stringsNumber);
+    const availableNutWidth = neckWidthMm - (edgePadding * 2);
+    const nutSpacingMm = availableNutWidth / (stringsNumber - 1);
+    
+    // Convert to current units
+    const nutSpacing = units === 'mm' ? nutSpacingMm : mmToInches(nutSpacingMm);
+    setNutStringSpacing(nutSpacing);
+  }, [stringSpacing, stringsNumber, neckWidth, units]);
   
   // Function to update URL with current parameters
   const updateUrlParams = () => {
@@ -269,16 +293,41 @@ const FretCalculator = () => {
   
   // Recalculate when parameters change
   useEffect(() => {
+    // If the units are inches, convert to mm first since our calculation functions expect mm
+    let scaleLengthValue = scaleLength;
+    let neckWidthValue = neckWidth;
+    let bridgeWidthValue = bridgeWidth;
+    let fretWidth12Value = fretWidth12;
+    
+    // Only convert if necessary
+    if (units === 'inches') {
+      scaleLengthValue = inchesToMm(scaleLength);
+      neckWidthValue = inchesToMm(neckWidth);
+      bridgeWidthValue = inchesToMm(bridgeWidth);
+      fretWidth12Value = inchesToMm(fretWidth12);
+    }
+    
     const positions = calculateFretPositions({
-      scaleLength,
+      scaleLength: scaleLengthValue,
       numFrets,
-      neckWidth, 
-      bridgeWidth, 
-      fretWidth12, 
+      neckWidth: neckWidthValue, 
+      bridgeWidth: bridgeWidthValue, 
+      fretWidth12: fretWidth12Value, 
       useCustomWidth12
     });
-    setFretPositions(positions);
-  }, [scaleLength, numFrets, neckWidth, bridgeWidth, fretWidth12, useCustomWidth12]);
+    
+    // If units are inches, convert the calculated positions back to inches
+    if (units === 'inches') {
+      const inchPositions = positions.map(fret => ({
+        ...fret,
+        distance: mmToInches(fret.distance),
+        width: mmToInches(fret.width)
+      }));
+      setFretPositions(inchPositions);
+    } else {
+      setFretPositions(positions);
+    }
+  }, [scaleLength, numFrets, neckWidth, bridgeWidth, fretWidth12, useCustomWidth12, units]);
   
   return (
     <div className="w-full bg-gray-50 min-h-screen">
@@ -345,6 +394,7 @@ const FretCalculator = () => {
             useCustomWidth12={useCustomWidth12}
             stringsNumber={stringsNumber}
             stringSpacing={stringSpacing}
+            nutStringSpacing={nutStringSpacing}
             fretThickness={fretThickness}
             calculatedBridgeWidth={calculatedBridgeWidth}
             handlePresetChange={handlePresetChange}

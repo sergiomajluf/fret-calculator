@@ -22,6 +22,7 @@ const ControlPanel = ({
   useCustomWidth12,
   stringsNumber,
   stringSpacing,
+  nutStringSpacing,
   fretThickness,
   calculatedBridgeWidth,
   handlePresetChange,
@@ -196,8 +197,25 @@ const ControlPanel = ({
             className="w-full p-2 border rounded"
           />
         </div>
-        
-        <div className="flex items-center space-x-2 mt-2">
+
+<div className="mb-3">
+  <label className="block text-sm font-medium mb-1">
+    {translations[language].nutStringSpacing} ({units})
+  </label>
+  <input
+    type="text"
+    value={formatMeasurement(nutStringSpacing, units)}
+    readOnly
+    className="w-full p-2 border rounded bg-gray-100"
+  />
+  <p className="text-xs text-gray-500 mt-1">
+    {language === 'en' 
+      ? 'This value is calculated to make outer strings parallel to the fretboard edges' 
+      : 'Este valor se calcula para que las cuerdas exteriores sean paralelas a los bordes del diapasón'}
+  </p>
+</div>
+
+<div className="flex items-center space-x-2 mt-2">
           <div className="flex-grow">
             <p className="text-sm text-gray-600 mb-1">
               {translations[language].calculateBridgeNote}

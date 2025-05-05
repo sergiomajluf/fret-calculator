@@ -24,10 +24,32 @@ export const inchesToMm = (inches) => inches * 25.4;
  * @returns {string} Formatted measurement with units
  */
 export const formatMeasurement = (value, units) => {
-  if (units === 'inches') {
-    return mmToInches(value).toFixed(4) + '"';
+  // Check if value is undefined or null
+  if (value === undefined || value === null) {
+    return units === 'inches' ? '0.0000"' : '0.00mm';
   }
-  return value.toFixed(2) + 'mm';
+  
+  // Ensure value is a number
+  const numValue = Number(value);
+  if (isNaN(numValue)) {
+    return units === 'inches' ? '0.0000"' : '0.00mm';
+  }
+  
+  if (units === 'inches') {
+    return mmToInches(numValue).toFixed(4) + '"';
+  }
+  return numValue.toFixed(2) + 'mm';
+};
+
+/**
+ * Calculate the edge padding for strings
+ * @param {number} stringsNumber - Number of strings
+ * @returns {number} Edge padding in mm
+ */
+export const calculateStringEdgePadding = (stringsNumber) => {
+  // Scale the margin proportionally based on number of strings
+  // About 4.3mm on each side for 6-string guitars
+  return 4.3 * (stringsNumber / 6);
 };
 
 /**
@@ -138,23 +160,54 @@ export const calculateBridgeWidth = (stringSpacing, stringsNumber) => {
   // Number of spaces between strings is stringsNumber - 1
   const totalStringSpan = stringSpacing * (stringsNumber - 1);
   
-  // Add margins for outer strings (about 4.3mm on each side for 6-string guitars)
-  // Scale the margin proportionally for other string counts
-  const marginFactor = 4.3 * (stringsNumber / 6);
-  return totalStringSpan + (marginFactor * 2);
+  // Get edge padding using the shared helper function
+  const edgePadding = calculateStringEdgePadding(stringsNumber);
+  
+  // Add the padding to both sides
+  return totalStringSpan + (edgePadding * 2);
 };
 
 /**
  * Get string positions for visualization
  * @param {number} stringsNumber - Number of strings
- * @param {number} stringSpacing - Spacing between strings
- * @returns {Array} Array of Y positions for each string
+ * @param {number} stringSpacing - Spacing between strings at bridge
+ * @param {number} neckWidth - Width at nut
+ * @param {number} bridgeWidth - Width at bridge
+ * @returns {Object} Object with string positions and adjusted spacing at nut
  */
-export const getStringPositions = (stringsNumber, stringSpacing) => {
-  const totalStringSpan = stringSpacing * (stringsNumber - 1);
-  const startY = -totalStringSpan / 2;
-  return Array.from(
+export const getStringPositions = (stringsNumber, stringSpacing, neckWidth, bridgeWidth) => {
+  // Calculate edge padding at bridge (consistent with bridge width calculation)
+  const edgePadding = calculateStringEdgePadding(stringsNumber);
+  
+  // Total span of strings at bridge
+  const bridgeStringSpan = stringSpacing * (stringsNumber - 1);
+  
+  // Available width at nut (after padding)
+  const availableNutWidth = neckWidth - (edgePadding * 2);
+  
+  // Calculate the string spacing at the nut to maintain parallel outer strings
+  const nutStringSpacing = availableNutWidth / (stringsNumber - 1);
+  
+  // Total span of strings at nut
+  const nutStringSpan = nutStringSpacing * (stringsNumber - 1);
+  
+  // Calculate positions at bridge
+  const startYBridge = -bridgeStringSpan / 2;
+  const bridgePositions = Array.from(
     { length: stringsNumber }, 
-    (_, i) => startY + (i * stringSpacing)
+    (_, i) => startYBridge + (i * stringSpacing)
   );
+  
+  // Calculate positions at nut
+  const startYNut = -nutStringSpan / 2;
+  const nutPositions = Array.from(
+    { length: stringsNumber }, 
+    (_, i) => startYNut + (i * nutStringSpacing)
+  );
+  
+  return {
+    bridgePositions,
+    nutPositions,
+    nutStringSpacing
+  };
 };

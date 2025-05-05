@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 
 const FretCalculator = () => {
   // Presets para diferentes instrumentos
@@ -118,9 +118,8 @@ const FretCalculator = () => {
   const [units, setUnits] = useState('mm');
   const [fretThickness, setFretThickness] = useState(instrumentPresets[0].fretThickness.mm);
   const [fretPositions, setFretPositions] = useState([]);
-  const [svgData, setSvgData] = useState('');
-  const [isCustom, setIsCustom] = useState(false);
   const [shareUrl, setShareUrl] = useState('');
+  const [isCustom, setIsCustom] = useState(false);
   
   // Constante para la relación matemática de los trastes (12va raíz de 2)
   const FRET_RATIO = Math.pow(2, 1/12);
@@ -343,31 +342,7 @@ const FretCalculator = () => {
     let bridgeWidthMm = units === 'mm' ? bridgeWidth : inchesToMm(bridgeWidth);
     let fretThicknessMm = units === 'mm' ? fretThickness : inchesToMm(fretThickness);
     
-    // Configurar el documento SVG para escala real (1mm = 1mm en el SVG)
-    const padding = 20; // Padding en mm
-    const svgWidth = scaleLengthMm + padding * 2;  // Intercambiadas para orientación horizontal
-    const svgHeight = bridgeWidthMm + padding * 2; // Intercambiadas para orientación horizontal
-    
-    // Crear el elemento SVG
-    const svgNamespace = "http://www.w3.org/2000/svg";
-    const svg = document.createElementNS(svgNamespace, "svg");
-    svg.setAttribute("xmlns", svgNamespace);
-    svg.setAttribute("width", `${svgWidth}mm`);
-    svg.setAttribute("height", `${svgHeight}mm`);
-    svg.setAttribute("viewBox", `0 0 ${svgWidth} ${svgHeight}`);
-    svg.setAttribute("preserveAspectRatio", "xMidYMid meet");
-    
-    // Añadir descripción
-    const desc = document.createElementNS(svgNamespace, "desc");
-    const presetName = instrumentPresets[selectedPreset].name;
-    desc.textContent = `Plantilla de trastes a escala real - ${presetName} - Longitud: ${formatMeasurement(scaleLengthMm)}, ${numFrets} trastes`;
-    svg.appendChild(desc);
-    
-    // Crear el grupo principal con transformación
-    const g = document.createElementNS(svgNamespace, "g");
-    g.setAttribute("transform", `translate(${padding}, ${padding}) rotate(90, ${scaleLengthMm/2}, ${bridgeWidthMm/2})`);
-    
-    // Recalcular posiciones para el SVG
+    // Recalcular posiciones para el SVG de exportación
     const positions = [];
     let currentLength = scaleLengthMm;
     
@@ -403,104 +378,52 @@ const FretCalculator = () => {
       width: bridgeWidthMm
     });
     
-    // Dibujar el contorno del mástil
-    const path = document.createElementNS(svgNamespace, "path");
+    // Configurar el documento SVG para escala real (1mm = 1mm en el SVG)
+    const padding = 20; // Padding en mm
     
-    // Definir los puntos del contorno
-    let pathData = `M ${(bridgeWidthMm - neckWidthMm) / 2} 0 `; // Punto superior izquierdo
+    // Crear el SVG a partir de una cadena de texto para mayor control
+    let svgString = `<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="${scaleLengthMm + padding * 2}mm" height="${Math.max(bridgeWidthMm, neckWidthMm) + padding * 2}mm" viewBox="0 0 ${scaleLengthMm + padding * 2} ${Math.max(bridgeWidthMm, neckWidthMm) + padding * 2}">
+  <desc>Plantilla de trastes a escala real - ${instrumentPresets[selectedPreset].name} - Longitud: ${formatMeasurement(scaleLengthMm)}, ${numFrets} trastes</desc>
+  <g transform="translate(${padding}, ${padding + Math.max(bridgeWidthMm, neckWidthMm) / 2})">
+    <!-- Contorno del mástil -->
+    <path d="M 0 ${-neckWidthMm / 2} `;
     
-    // Línea lateral izquierda (interpolando el ancho)
-    positions.forEach((fret) => {
-      const x = (bridgeWidthMm - fret.width) / 2;
-      const y = fret.distance;
-      pathData += `L ${x} ${y} `;
+    // Añadir línea lateral izquierda
+    positions.forEach(fret => {
+      svgString += `L ${fret.distance} ${-fret.width / 2} `;
     });
     
-    // Línea inferior (puente)
-    pathData += `L ${(bridgeWidthMm + positions[positions.length - 1].width) / 2} ${scaleLengthMm} `;
+    // Añadir línea inferior y lateral derecha
+    svgString += `L ${scaleLengthMm} ${bridgeWidthMm / 2} `;
     
     // Línea lateral derecha (subiendo)
     for (let i = positions.length - 2; i >= 0; i--) {
       const fret = positions[i];
-      const x = (bridgeWidthMm + fret.width) / 2;
-      const y = fret.distance;
-      pathData += `L ${x} ${y} `;
+      svgString += `L ${fret.distance} ${fret.width / 2} `;
     }
     
-    pathData += 'Z';
-    path.setAttribute("d", pathData);
-    path.setAttribute("fill", "none");
-    path.setAttribute("stroke", "black");
-    path.setAttribute("stroke-width", "0.5");
-    g.appendChild(path);
+    svgString += `Z" fill="none" stroke="black" stroke-width="0.5" />
     
-    // Dibujar líneas para cada traste
-    positions.slice(1, -1).forEach((fret) => {
-      const y = fret.distance;
-      const width = fret.width;
-      const x1 = (bridgeWidthMm - width) / 2;
-      const x2 = (bridgeWidthMm + width) / 2;
-      
-      // Línea del traste
-      const line = document.createElementNS(svgNamespace, "line");
-      line.setAttribute("x1", x1);
-      line.setAttribute("y1", y);
-      line.setAttribute("x2", x2);
-      line.setAttribute("y2", y);
-      line.setAttribute("stroke", "black");
-      line.setAttribute("stroke-width", fretThicknessMm);
-      line.setAttribute("stroke-linecap", "round");
-      g.appendChild(line);
-      
-      // Número del traste
-      const text = document.createElementNS(svgNamespace, "text");
-      text.setAttribute("x", bridgeWidthMm + 5);
-      text.setAttribute("y", y + 2);
-      text.setAttribute("font-family", "Arial");
-      text.setAttribute("font-size", "4");
-      text.setAttribute("text-anchor", "start");
-      text.textContent = fret.position;
-      g.appendChild(text);
+    <!-- Cejuela -->
+    <line x1="0" y1="${-neckWidthMm / 2}" x2="0" y2="${neckWidthMm / 2}" stroke="black" stroke-width="3" stroke-linecap="round" />
+    
+    <!-- Puente -->
+    <line x1="${scaleLengthMm}" y1="${-bridgeWidthMm / 2}" x2="${scaleLengthMm}" y2="${bridgeWidthMm / 2}" stroke="black" stroke-width="3" stroke-linecap="round" />`;
+    
+    // Añadir líneas para cada traste
+    positions.slice(1, -1).forEach(fret => {
+      svgString += `
+    <!-- Traste ${fret.position} -->
+    <line x1="${fret.distance}" y1="${-fret.width / 2}" x2="${fret.distance}" y2="${fret.width / 2}" stroke="black" stroke-width="${fretThicknessMm}" stroke-linecap="round" />
+    <text x="${fret.distance - 4}" y="${-fret.width / 2 - 5}" font-family="Arial" font-size="8" text-anchor="middle">${fret.position}</text>`;
     });
     
-    // Añadir línea de la cejuela
-    const nutLine = document.createElementNS(svgNamespace, "line");
-    nutLine.setAttribute("x1", (bridgeWidthMm - neckWidthMm) / 2);
-    nutLine.setAttribute("y1", 0);
-    nutLine.setAttribute("x2", (bridgeWidthMm + neckWidthMm) / 2);
-    nutLine.setAttribute("y2", 0);
-    nutLine.setAttribute("stroke", "black");
-    nutLine.setAttribute("stroke-width", 3);
-    nutLine.setAttribute("stroke-linecap", "round");
-    g.appendChild(nutLine);
-    
-    // Añadir línea del puente
-    const bridgeLine = document.createElementNS(svgNamespace, "line");
-    bridgeLine.setAttribute("x1", (bridgeWidthMm - positions[positions.length - 1].width) / 2);
-    bridgeLine.setAttribute("y1", scaleLengthMm);
-    bridgeLine.setAttribute("x2", (bridgeWidthMm + positions[positions.length - 1].width) / 2);
-    bridgeLine.setAttribute("y2", scaleLengthMm);
-    bridgeLine.setAttribute("stroke", "black");
-    bridgeLine.setAttribute("stroke-width", 3);
-    bridgeLine.setAttribute("stroke-linecap", "round");
-    g.appendChild(bridgeLine);
-    
-    // Información de escala y preset
-    const scaleText = document.createElementNS(svgNamespace, "text");
-    scaleText.setAttribute("x", bridgeWidthMm / 2);
-    scaleText.setAttribute("y", scaleLengthMm + 10);
-    scaleText.setAttribute("font-family", "Arial");
-    scaleText.setAttribute("font-size", "5");
-    scaleText.setAttribute("text-anchor", "middle");
-    scaleText.textContent = `${presetName} - Escala: ${formatMeasurement(scaleLengthMm)} - ${numFrets} trastes`;
-    g.appendChild(scaleText);
-    
-    // Añadir el grupo al SVG
-    svg.appendChild(g);
-    
-    // Convertir el SVG a string
-    const serializer = new XMLSerializer();
-    const svgString = serializer.serializeToString(svg);
+    // Información de escala
+    svgString += `
+    <text x="${scaleLengthMm / 2}" y="${bridgeWidthMm / 2 + 15}" font-family="Arial" font-size="10" text-anchor="middle">${instrumentPresets[selectedPreset].name} - Escala: ${formatMeasurement(scaleLengthMm)} - ${numFrets} trastes</text>
+  </g>
+</svg>`;
     
     // Crear un Blob con el SVG
     const blob = new Blob([svgString], { type: 'image/svg+xml' });
@@ -511,6 +434,7 @@ const FretCalculator = () => {
     link.href = url;
     
     // Generar un nombre de archivo basado en el preset seleccionado
+    const presetName = instrumentPresets[selectedPreset].name;
     const presetNameForFile = presetName.replace(/\s+\([^)]*\)/g, '').replace(/\s+/g, '_').toLowerCase();
     link.download = `trastes_${presetNameForFile}_${formatMeasurement(scaleLengthMm).replace(/[^0-9.]/g, '')}.svg`;
     
@@ -520,9 +444,6 @@ const FretCalculator = () => {
     
     // Liberar el objeto URL
     URL.revokeObjectURL(url);
-    
-    // Actualizar el estado para la vista previa
-    setSvgData(svgString);
   };
   
   // Función para generar y descargar un DXF
@@ -531,6 +452,7 @@ const FretCalculator = () => {
     let scaleLengthMm = units === 'mm' ? scaleLength : inchesToMm(scaleLength);
     let neckWidthMm = units === 'mm' ? neckWidth : inchesToMm(neckWidth);
     let bridgeWidthMm = units === 'mm' ? bridgeWidth : inchesToMm(bridgeWidth);
+    let fretThicknessMm = units === 'mm' ? fretThickness : inchesToMm(fretThickness);
     
     // Recalcular posiciones para el DXF
     const positions = [];
@@ -577,65 +499,47 @@ const FretCalculator = () => {
     // Sección ENTITIES
     dxf += "0\nSECTION\n2\nENTITIES\n";
     
-    // Línea para la cejuela
+    // Cejuela - línea horizontal 
     dxf += "0\nLINE\n";
     dxf += "8\n0\n";
-    dxf += `10\n${(bridgeWidthMm - neckWidthMm) / 2}\n20\n0\n30\n0\n`;
-    dxf += `11\n${(bridgeWidthMm + neckWidthMm) / 2}\n21\n0\n31\n0\n`;
+    dxf += `10\n0\n20\n${-neckWidthMm / 2}\n30\n0\n`;
+    dxf += `11\n0\n21\n${neckWidthMm / 2}\n31\n0\n`;
     
-    // Líneas para los trastes
+    // Puente - línea horizontal
+    dxf += "0\nLINE\n";
+    dxf += "8\n0\n";
+    dxf += `10\n${scaleLengthMm}\n20\n${-bridgeWidthMm / 2}\n30\n0\n`;
+    dxf += `11\n${scaleLengthMm}\n21\n${bridgeWidthMm / 2}\n31\n0\n`;
+    
+    // Líneas para los trastes - líneas verticales
     positions.slice(1, -1).forEach((fret) => {
-      const y = fret.distance;
-      const width = fret.width;
-      const x1 = (bridgeWidthMm - width) / 2;
-      const x2 = (bridgeWidthMm + width) / 2;
-      
       dxf += "0\nLINE\n";
       dxf += "8\n0\n";
-      dxf += `10\n${x1}\n20\n${y}\n30\n0\n`;
-      dxf += `11\n${x2}\n21\n${y}\n31\n0\n`;
+      dxf += `10\n${fret.distance}\n20\n${-fret.width / 2}\n30\n0\n`;
+      dxf += `11\n${fret.distance}\n21\n${fret.width / 2}\n31\n0\n`;
     });
-    
-    // Línea para el puente
-    const lastFret = positions[positions.length - 1];
-    dxf += "0\nLINE\n";
-    dxf += "8\n0\n";
-    dxf += `10\n${(bridgeWidthMm - lastFret.width) / 2}\n20\n${scaleLengthMm}\n30\n0\n`;
-    dxf += `11\n${(bridgeWidthMm + lastFret.width) / 2}\n21\n${scaleLengthMm}\n31\n0\n`;
     
     // Contorno lateral izquierdo
-    let prevX = (bridgeWidthMm - neckWidthMm) / 2;
-    let prevY = 0;
-    
-    positions.slice(1).forEach((fret) => {
-      const x = (bridgeWidthMm - fret.width) / 2;
-      const y = fret.distance;
+    for (let i = 0; i < positions.length - 1; i++) {
+      const fret1 = positions[i];
+      const fret2 = positions[i + 1];
       
       dxf += "0\nLINE\n";
       dxf += "8\n0\n";
-      dxf += `10\n${prevX}\n20\n${prevY}\n30\n0\n`;
-      dxf += `11\n${x}\n21\n${y}\n31\n0\n`;
-      
-      prevX = x;
-      prevY = y;
-    });
+      dxf += `10\n${fret1.distance}\n20\n${-fret1.width / 2}\n30\n0\n`;
+      dxf += `11\n${fret2.distance}\n21\n${-fret2.width / 2}\n31\n0\n`;
+    }
     
     // Contorno lateral derecho
-    prevX = (bridgeWidthMm + neckWidthMm) / 2;
-    prevY = 0;
-    
-    positions.slice(1).forEach((fret) => {
-      const x = (bridgeWidthMm + fret.width) / 2;
-      const y = fret.distance;
+    for (let i = 0; i < positions.length - 1; i++) {
+      const fret1 = positions[i];
+      const fret2 = positions[i + 1];
       
       dxf += "0\nLINE\n";
       dxf += "8\n0\n";
-      dxf += `10\n${prevX}\n20\n${prevY}\n30\n0\n`;
-      dxf += `11\n${x}\n21\n${y}\n31\n0\n`;
-      
-      prevX = x;
-      prevY = y;
-    });
+      dxf += `10\n${fret1.distance}\n20\n${fret1.width / 2}\n30\n0\n`;
+      dxf += `11\n${fret2.distance}\n21\n${fret2.width / 2}\n31\n0\n`;
+    }
     
     // Cerrar el DXF
     dxf += "0\nENDSEC\n0\nEOF";
@@ -1039,6 +943,7 @@ const FretCalculator = () => {
         <div className="mt-6 text-center text-sm text-gray-600">
           <p>Esta herramienta utiliza la fórmula estándar del temperamento igual (12ª raíz de 2) para calcular las posiciones de los trastes.</p>
           <p>Los archivos SVG generados están configurados a escala real 1:1 para impresión o fabricación.</p>
+          <p>Desarrollada para luthiers y constructores de instrumentos musicales.</p>
         </div>
       </div>
     </div>

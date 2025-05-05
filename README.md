@@ -1,70 +1,121 @@
-# Getting Started with Create React App
+# Calculadora de Trastes para Instrumentos de Cuerda
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+![Calculadora de Trastes](https://img.shields.io/badge/Calculadora-Trastes-blue)
+![React](https://img.shields.io/badge/React-18.x-61DAFB)
+![Licencia](https://img.shields.io/badge/Licencia-MIT-green)
 
-## Available Scripts
+Una herramienta precisa para luthiers y fabricantes de instrumentos musicales, que calcula y genera planos a escala real para la ubicación de trastes en instrumentos de cuerda como guitarras, bajos, y ukuleles.
 
-In the project directory, you can run:
+## 🎸 [Ver Demo en Vivo](https://sergiomajluf.github.io/fret-calculator)
 
-### `npm start`
+![Vista previa de la calculadora](https://via.placeholder.com/800x400?text=Vista+Previa+Calculadora+de+Trastes)
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+## 📋 Características
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+- **Cálculos precisos** basados en la fórmula del temperamento igual (12ª raíz de 2)
+- **Unidades en milímetros o pulgadas** para adaptarse a diferentes preferencias
+- **Personalización completa** de parámetros:
+  - Longitud de escala
+  - Número de trastes
+  - Ancho en la cejuela
+  - Ancho en el puente
+  - Grosor de los trastes
+- **Exportación a formatos vectoriales** para fabricación:
+  - SVG (ideal para impresión o corte láser)
+  - DXF (compatible con software CAD)
+- **Vista previa interactiva** del diapasón
+- **Tabla de mediciones** con las posiciones exactas de cada traste
 
-### `npm test`
+## 🚀 Tecnologías Utilizadas
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+- React.js
+- Tailwind CSS
+- GitHub Pages
 
-### `npm run build`
+## 📐 Fundamentos Matemáticos
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+La calculadora utiliza la fórmula estándar para calcular la posición de cada traste según el temperamento igual:
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+```
+Distancia desde la cejuela al traste n = Longitud de escala - (Longitud de escala / (2^(n/12)))
+```
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+Donde:
+- n es el número del traste
+- La longitud de escala es la distancia entre la cejuela y el puente
 
-### `npm run eject`
+## 🔧 Configuraciones Típicas
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+### Guitarras
+- Escala estándar: 25.5" (648mm) o 24.75" (628mm)
+- Número de trastes: 19-24
+- Ancho en cejuela: 42-44mm (guitarras clásicas: 51-52mm)
+- Ancho en puente: 52-56mm (guitarras clásicas: 58-62mm)
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+### Bajos
+- Escala estándar: 34" (864mm) o 30" (762mm) para short scale
+- Número de trastes: 20-24
+- Ancho en cejuela: 38-45mm
+- Ancho en puente: 54-60mm
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+### Ukuleles
+- Soprano: 13-14" (330-355mm)
+- Concierto: 15-16" (380-406mm)
+- Tenor: 17-18" (430-460mm)
+- Barítono: 19-20" (485-510mm)
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+## 📝 Cómo Usar
 
-## Learn More
+1. Selecciona tus unidades preferidas (mm o pulgadas)
+2. Ingresa la longitud de escala de tu instrumento
+3. Ajusta el número de trastes
+4. Configura el ancho en la cejuela y en el puente
+5. Configura el grosor de los trastes
+6. Descarga el archivo SVG o DXF
+7. Usa el archivo para fabricación o como plantilla de medición
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+## 📋 Para Desarrolladores
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+### Instalación Local
 
-### Code Splitting
+```bash
+# Clonar el repositorio
+git clone https://github.com/sergiomajluf/fret-calculator.git
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+# Entrar en el directorio
+cd fret-calculator
 
-### Analyzing the Bundle Size
+# Instalar dependencias
+npm install
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+# Iniciar servidor de desarrollo
+npm start
+```
 
-### Making a Progressive Web App
+### Desplegar en GitHub Pages
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
+```bash
+npm run deploy
+```
 
-### Advanced Configuration
+## 🔍 Recursos Adicionales
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
+- [Teoría del temperamento igual](https://es.wikipedia.org/wiki/Temperamento_igual)
+- [Guía para construir guitarras](https://www.guitarmaking.com/)
+- [Tabla de escalas para diferentes instrumentos](https://www.liutaiomottola.com/formulae/fret.htm)
 
-### Deployment
+## 📄 Licencia
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
+Este proyecto está bajo la Licencia MIT - ver el archivo [LICENSE.md](LICENSE.md) para más detalles.
 
-### `npm run build` fails to minify
+## 👥 Contribuciones
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+Las contribuciones son bienvenidas. Si tienes alguna idea para mejorar esta calculadora, no dudes en crear un pull request o abrir un issue.
+
+## 💬 Contacto
+
+Para preguntas o comentarios, puedes contactarme a través de [GitHub](https://github.com/sergiomajluf) o en Twitter [@sergiomajluf](https://twitter.com/sergiomajluf).
+
+---
+
+Hecho con ❤️ por [Sergio Majluf](https://github.com/sergiomajluf)

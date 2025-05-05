@@ -1,6 +1,6 @@
 import React from 'react';
 import './App.css';
-import FretCalculator from './FretCalculator';
+import FretCalculator from './components/FretCalculator';
 
 function App() {
   return (

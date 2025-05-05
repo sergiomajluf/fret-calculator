@@ -1,18 +1,258 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 
 const FretCalculator = () => {
+  // Presets para diferentes instrumentos
+  const instrumentPresets = [
+    { 
+      name: 'Personalizado', 
+      scaleLength: { mm: 648, in: 25.5 },
+      numFrets: 22,
+      neckWidth: { mm: 43, in: 1.69 },
+      bridgeWidth: { mm: 56, in: 2.20 },
+      fretThickness: { mm: 2.0, in: 0.079 }
+    },
+    { 
+      name: 'Fender Stratocaster (25.5")', 
+      scaleLength: { mm: 648, in: 25.5 },
+      numFrets: 22,
+      neckWidth: { mm: 42, in: 1.65 },
+      bridgeWidth: { mm: 56, in: 2.20 },
+      fretThickness: { mm: 2.0, in: 0.079 }
+    },
+    { 
+      name: 'Gibson Les Paul (24.75")', 
+      scaleLength: { mm: 628.65, in: 24.75 },
+      numFrets: 22,
+      neckWidth: { mm: 43, in: 1.69 },
+      bridgeWidth: { mm: 54, in: 2.13 },
+      fretThickness: { mm: 2.0, in: 0.079 }
+    },
+    { 
+      name: 'PRS Custom 24 (25.0")', 
+      scaleLength: { mm: 635, in: 25.0 },
+      numFrets: 24,
+      neckWidth: { mm: 42, in: 1.65 },
+      bridgeWidth: { mm: 56, in: 2.20 },
+      fretThickness: { mm: 2.0, in: 0.079 }
+    },
+    { 
+      name: 'Ibanez RG (25.5")', 
+      scaleLength: { mm: 648, in: 25.5 },
+      numFrets: 24,
+      neckWidth: { mm: 43, in: 1.69 },
+      bridgeWidth: { mm: 58, in: 2.28 },
+      fretThickness: { mm: 2.0, in: 0.079 }
+    },
+    { 
+      name: 'Guitarra Clásica (25.6")', 
+      scaleLength: { mm: 650, in: 25.6 },
+      numFrets: 19,
+      neckWidth: { mm: 52, in: 2.05 },
+      bridgeWidth: { mm: 58, in: 2.28 },
+      fretThickness: { mm: 2.0, in: 0.079 }
+    },
+    { 
+      name: 'Bajo corto (30")', 
+      scaleLength: { mm: 762, in: 30 },
+      numFrets: 22,
+      neckWidth: { mm: 38, in: 1.5 },
+      bridgeWidth: { mm: 54, in: 2.13 },
+      fretThickness: { mm: 2.5, in: 0.098 }
+    },
+    { 
+      name: 'Bajo medio (32")', 
+      scaleLength: { mm: 813, in: 32 },
+      numFrets: 22,
+      neckWidth: { mm: 40, in: 1.57 },
+      bridgeWidth: { mm: 56, in: 2.20 },
+      fretThickness: { mm: 2.5, in: 0.098 }
+    },
+    { 
+      name: 'Bajo estándar (34")', 
+      scaleLength: { mm: 864, in: 34 },
+      numFrets: 24,
+      neckWidth: { mm: 44, in: 1.73 },
+      bridgeWidth: { mm: 60, in: 2.36 },
+      fretThickness: { mm: 2.5, in: 0.098 }
+    },
+    { 
+      name: 'Bajo extra largo (35")', 
+      scaleLength: { mm: 889, in: 35 },
+      numFrets: 24,
+      neckWidth: { mm: 45, in: 1.77 },
+      bridgeWidth: { mm: 62, in: 2.44 },
+      fretThickness: { mm: 2.5, in: 0.098 }
+    },
+    { 
+      name: 'Ukulele Soprano (13")', 
+      scaleLength: { mm: 330, in: 13 },
+      numFrets: 12,
+      neckWidth: { mm: 35, in: 1.38 },
+      bridgeWidth: { mm: 43, in: 1.69 },
+      fretThickness: { mm: 1.5, in: 0.059 }
+    },
+    { 
+      name: 'Ukulele Concierto (15")', 
+      scaleLength: { mm: 380, in: 15 },
+      numFrets: 18,
+      neckWidth: { mm: 38, in: 1.5 },
+      bridgeWidth: { mm: 45, in: 1.77 },
+      fretThickness: { mm: 1.5, in: 0.059 }
+    },
+    { 
+      name: 'Mandolina (14")', 
+      scaleLength: { mm: 355, in: 14 },
+      numFrets: 20,
+      neckWidth: { mm: 28, in: 1.10 },
+      bridgeWidth: { mm: 40, in: 1.57 },
+      fretThickness: { mm: 1.2, in: 0.047 }
+    }
+  ];
+
   // Estados para los parámetros
-  const [scaleLength, setScaleLength] = useState(648); // Longitud de escala en mm (estándar para guitarra)
-  const [numFrets, setNumFrets] = useState(24);
-  const [neckWidth, setNeckWidth] = useState(43); // Ancho del mástil en la cejuela (mm)
-  const [bridgeWidth, setBridgeWidth] = useState(56); // Ancho del mástil en el puente (mm)
+  const [selectedPreset, setSelectedPreset] = useState(0);
+  const [scaleLength, setScaleLength] = useState(instrumentPresets[0].scaleLength.mm);
+  const [numFrets, setNumFrets] = useState(instrumentPresets[0].numFrets);
+  const [neckWidth, setNeckWidth] = useState(instrumentPresets[0].neckWidth.mm);
+  const [bridgeWidth, setBridgeWidth] = useState(instrumentPresets[0].bridgeWidth.mm);
   const [units, setUnits] = useState('mm');
-  const [fretThickness, setFretThickness] = useState(2.0); // Grosor del traste en mm
+  const [fretThickness, setFretThickness] = useState(instrumentPresets[0].fretThickness.mm);
   const [fretPositions, setFretPositions] = useState([]);
   const [svgData, setSvgData] = useState('');
+  const [isCustom, setIsCustom] = useState(false);
+  const [shareUrl, setShareUrl] = useState('');
   
   // Constante para la relación matemática de los trastes (12va raíz de 2)
   const FRET_RATIO = Math.pow(2, 1/12);
+  
+  // Función para cargar parámetros desde la URL al inicio
+  useEffect(() => {
+    const loadParamsFromUrl = () => {
+      if (typeof window !== 'undefined') {
+        const params = new URLSearchParams(window.location.search);
+        
+        // Si hay parámetros en la URL, cargarlos
+        if (params.toString()) {
+          const preset = params.get('preset');
+          const unitParam = params.get('units');
+          const scale = params.get('scale');
+          const frets = params.get('frets');
+          const neck = params.get('neck');
+          const bridge = params.get('bridge');
+          const thickness = params.get('thickness');
+          
+          // Establecer las unidades primero
+          if (unitParam === 'in' || unitParam === 'inches') {
+            setUnits('inches');
+          } else {
+            setUnits('mm');
+          }
+          
+          // Si hay un preset específico, cargarlo
+          if (preset && !isNaN(parseInt(preset)) && parseInt(preset) >= 0 && parseInt(preset) < instrumentPresets.length) {
+            setSelectedPreset(parseInt(preset));
+          } else {
+            // Si no hay preset o es inválido, usar el personalizado
+            setSelectedPreset(0);
+            setIsCustom(true);
+          }
+          
+          // Cargar parámetros individuales si existen
+          if (scale && !isNaN(parseFloat(scale))) {
+            setScaleLength(parseFloat(scale));
+          } else if (preset && !isNaN(parseInt(preset))) {
+            setScaleLength(units === 'mm' ? 
+              instrumentPresets[parseInt(preset)].scaleLength.mm : 
+              instrumentPresets[parseInt(preset)].scaleLength.in);
+          }
+          
+          if (frets && !isNaN(parseInt(frets))) {
+            setNumFrets(parseInt(frets));
+          } else if (preset && !isNaN(parseInt(preset))) {
+            setNumFrets(instrumentPresets[parseInt(preset)].numFrets);
+          }
+          
+          if (neck && !isNaN(parseFloat(neck))) {
+            setNeckWidth(parseFloat(neck));
+          } else if (preset && !isNaN(parseInt(preset))) {
+            setNeckWidth(units === 'mm' ? 
+              instrumentPresets[parseInt(preset)].neckWidth.mm : 
+              instrumentPresets[parseInt(preset)].neckWidth.in);
+          }
+          
+          if (bridge && !isNaN(parseFloat(bridge))) {
+            setBridgeWidth(parseFloat(bridge));
+          } else if (preset && !isNaN(parseInt(preset))) {
+            setBridgeWidth(units === 'mm' ? 
+              instrumentPresets[parseInt(preset)].bridgeWidth.mm : 
+              instrumentPresets[parseInt(preset)].bridgeWidth.in);
+          }
+          
+          if (thickness && !isNaN(parseFloat(thickness))) {
+            setFretThickness(parseFloat(thickness));
+          } else if (preset && !isNaN(parseInt(preset))) {
+            setFretThickness(units === 'mm' ? 
+              instrumentPresets[parseInt(preset)].fretThickness.mm : 
+              instrumentPresets[parseInt(preset)].fretThickness.in);
+          }
+        }
+      }
+    };
+    
+    loadParamsFromUrl();
+  }, []);
+  
+  // Función para actualizar la URL con los parámetros actuales
+  const updateUrlParams = () => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams();
+      
+      // Añadir parámetros a la URL
+      params.set('preset', selectedPreset.toString());
+      params.set('units', units);
+      params.set('scale', scaleLength.toString());
+      params.set('frets', numFrets.toString());
+      params.set('neck', neckWidth.toString());
+      params.set('bridge', bridgeWidth.toString());
+      params.set('thickness', fretThickness.toString());
+      
+      // Actualizar la URL del navegador sin recargar la página
+      const newUrl = `${window.location.pathname}?${params.toString()}`;
+      window.history.replaceState({}, '', newUrl);
+      
+      // Guardar la URL completa para compartir
+      setShareUrl(`${window.location.origin}${newUrl}`);
+    }
+  };
+  
+  // Actualizar la URL cuando los parámetros cambian
+  useEffect(() => {
+    updateUrlParams();
+  }, [selectedPreset, units, scaleLength, numFrets, neckWidth, bridgeWidth, fretThickness]);
+  
+  // Función para manejar la selección de presets
+  const handlePresetChange = (presetIndex) => {
+    const preset = instrumentPresets[presetIndex];
+    setSelectedPreset(presetIndex);
+    
+    // Actualizar todos los parámetros según el preset seleccionado
+    setScaleLength(units === 'mm' ? preset.scaleLength.mm : preset.scaleLength.in);
+    setNumFrets(preset.numFrets);
+    setNeckWidth(units === 'mm' ? preset.neckWidth.mm : preset.neckWidth.in);
+    setBridgeWidth(units === 'mm' ? preset.bridgeWidth.mm : preset.bridgeWidth.in);
+    setFretThickness(units === 'mm' ? preset.fretThickness.mm : preset.fretThickness.in);
+    
+    // Si es el preset "Personalizado", habilitar la edición
+    setIsCustom(presetIndex === 0);
+  };
+  
+  // Función para detectar cambios y activar el modo personalizado
+  const handleParameterChange = () => {
+    if (selectedPreset !== 0) {
+      setSelectedPreset(0); // Cambiar a "Personalizado"
+      setIsCustom(true);
+    }
+  };
   
   // Función para convertir mm a pulgadas
   const mmToInches = (mm) => mm / 25.4;
@@ -72,7 +312,7 @@ const FretCalculator = () => {
   useEffect(() => {
     const positions = calculateFretPositions();
     setFretPositions(positions);
-  }, [scaleLength, numFrets, neckWidth, bridgeWidth, fretThickness, units]);
+  }, [scaleLength, numFrets, neckWidth, bridgeWidth, fretThickness]);
   
   // Función para convertir valores cuando cambian las unidades
   const handleUnitChange = (newUnits) => {
@@ -80,16 +320,16 @@ const FretCalculator = () => {
     
     if (newUnits === 'inches') {
       // Convertir mm a pulgadas
-      setScaleLength(parseFloat((scaleLength / 25.4).toFixed(3)));
-      setNeckWidth(parseFloat((neckWidth / 25.4).toFixed(3)));
-      setBridgeWidth(parseFloat((bridgeWidth / 25.4).toFixed(3)));
-      setFretThickness(parseFloat((fretThickness / 25.4).toFixed(3)));
+      setScaleLength(mmToInches(scaleLength));
+      setNeckWidth(mmToInches(neckWidth));
+      setBridgeWidth(mmToInches(bridgeWidth));
+      setFretThickness(mmToInches(fretThickness));
     } else {
       // Convertir pulgadas a mm
-      setScaleLength(parseFloat((scaleLength * 25.4).toFixed(1)));
-      setNeckWidth(parseFloat((neckWidth * 25.4).toFixed(1)));
-      setBridgeWidth(parseFloat((bridgeWidth * 25.4).toFixed(1)));
-      setFretThickness(parseFloat((fretThickness * 25.4).toFixed(1)));
+      setScaleLength(inchesToMm(scaleLength));
+      setNeckWidth(inchesToMm(neckWidth));
+      setBridgeWidth(inchesToMm(bridgeWidth));
+      setFretThickness(inchesToMm(fretThickness));
     }
     
     setUnits(newUnits);
@@ -97,10 +337,16 @@ const FretCalculator = () => {
   
   // Función para generar y descargar el SVG
   const handleGenerateSVG = () => {
+    // Asegurarse de que los cálculos sean en mm para el SVG
+    let scaleLengthMm = units === 'mm' ? scaleLength : inchesToMm(scaleLength);
+    let neckWidthMm = units === 'mm' ? neckWidth : inchesToMm(neckWidth);
+    let bridgeWidthMm = units === 'mm' ? bridgeWidth : inchesToMm(bridgeWidth);
+    let fretThicknessMm = units === 'mm' ? fretThickness : inchesToMm(fretThickness);
+    
     // Configurar el documento SVG para escala real (1mm = 1mm en el SVG)
     const padding = 20; // Padding en mm
-    const svgWidth = bridgeWidth + padding * 2;
-    const svgHeight = scaleLength + padding * 2;
+    const svgWidth = scaleLengthMm + padding * 2;  // Intercambiadas para orientación horizontal
+    const svgHeight = bridgeWidthMm + padding * 2; // Intercambiadas para orientación horizontal
     
     // Crear el elemento SVG
     const svgNamespace = "http://www.w3.org/2000/svg";
@@ -113,33 +359,70 @@ const FretCalculator = () => {
     
     // Añadir descripción
     const desc = document.createElementNS(svgNamespace, "desc");
-    desc.textContent = `Plantilla de trastes a escala real - Longitud: ${formatMeasurement(scaleLength)}, ${numFrets} trastes`;
+    const presetName = instrumentPresets[selectedPreset].name;
+    desc.textContent = `Plantilla de trastes a escala real - ${presetName} - Longitud: ${formatMeasurement(scaleLengthMm)}, ${numFrets} trastes`;
     svg.appendChild(desc);
     
     // Crear el grupo principal con transformación
     const g = document.createElementNS(svgNamespace, "g");
-    g.setAttribute("transform", `translate(${padding}, ${padding})`);
+    g.setAttribute("transform", `translate(${padding}, ${padding}) rotate(90, ${scaleLengthMm/2}, ${bridgeWidthMm/2})`);
+    
+    // Recalcular posiciones para el SVG
+    const positions = [];
+    let currentLength = scaleLengthMm;
+    
+    // La posición 0 es la cejuela
+    positions.push({
+      position: 0,
+      distance: 0,
+      width: neckWidthMm
+    });
+    
+    // Calcular cada traste
+    for (let i = 1; i <= numFrets; i++) {
+      const fretDistance = currentLength / FRET_RATIO;
+      const distanceFromNut = scaleLengthMm - fretDistance;
+      
+      // Calcular el ancho interpolando entre el ancho de la cejuela y el puente
+      const widthRatio = distanceFromNut / scaleLengthMm;
+      const width = neckWidthMm + (bridgeWidthMm - neckWidthMm) * widthRatio;
+      
+      positions.push({
+        position: i,
+        distance: distanceFromNut,
+        width: width
+      });
+      
+      currentLength = fretDistance;
+    }
+    
+    // Añadir el puente como último punto
+    positions.push({
+      position: numFrets + 1,
+      distance: scaleLengthMm,
+      width: bridgeWidthMm
+    });
     
     // Dibujar el contorno del mástil
     const path = document.createElementNS(svgNamespace, "path");
     
     // Definir los puntos del contorno
-    let pathData = `M ${(bridgeWidth - neckWidth) / 2} 0 `; // Punto superior izquierdo
+    let pathData = `M ${(bridgeWidthMm - neckWidthMm) / 2} 0 `; // Punto superior izquierdo
     
     // Línea lateral izquierda (interpolando el ancho)
-    fretPositions.forEach((fret) => {
-      const x = (bridgeWidth - fret.width) / 2;
+    positions.forEach((fret) => {
+      const x = (bridgeWidthMm - fret.width) / 2;
       const y = fret.distance;
       pathData += `L ${x} ${y} `;
     });
     
     // Línea inferior (puente)
-    pathData += `L ${(bridgeWidth + fretPositions[fretPositions.length - 1].width) / 2} ${scaleLength} `;
+    pathData += `L ${(bridgeWidthMm + positions[positions.length - 1].width) / 2} ${scaleLengthMm} `;
     
     // Línea lateral derecha (subiendo)
-    for (let i = fretPositions.length - 2; i >= 0; i--) {
-      const fret = fretPositions[i];
-      const x = (bridgeWidth + fret.width) / 2;
+    for (let i = positions.length - 2; i >= 0; i--) {
+      const fret = positions[i];
+      const x = (bridgeWidthMm + fret.width) / 2;
       const y = fret.distance;
       pathData += `L ${x} ${y} `;
     }
@@ -152,11 +435,11 @@ const FretCalculator = () => {
     g.appendChild(path);
     
     // Dibujar líneas para cada traste
-    fretPositions.slice(1, -1).forEach((fret) => {
+    positions.slice(1, -1).forEach((fret) => {
       const y = fret.distance;
       const width = fret.width;
-      const x1 = (bridgeWidth - width) / 2;
-      const x2 = (bridgeWidth + width) / 2;
+      const x1 = (bridgeWidthMm - width) / 2;
+      const x2 = (bridgeWidthMm + width) / 2;
       
       // Línea del traste
       const line = document.createElementNS(svgNamespace, "line");
@@ -165,13 +448,13 @@ const FretCalculator = () => {
       line.setAttribute("x2", x2);
       line.setAttribute("y2", y);
       line.setAttribute("stroke", "black");
-      line.setAttribute("stroke-width", fretThickness);
+      line.setAttribute("stroke-width", fretThicknessMm);
       line.setAttribute("stroke-linecap", "round");
       g.appendChild(line);
       
       // Número del traste
       const text = document.createElementNS(svgNamespace, "text");
-      text.setAttribute("x", bridgeWidth + 5);
+      text.setAttribute("x", bridgeWidthMm + 5);
       text.setAttribute("y", y + 2);
       text.setAttribute("font-family", "Arial");
       text.setAttribute("font-size", "4");
@@ -182,9 +465,9 @@ const FretCalculator = () => {
     
     // Añadir línea de la cejuela
     const nutLine = document.createElementNS(svgNamespace, "line");
-    nutLine.setAttribute("x1", (bridgeWidth - neckWidth) / 2);
+    nutLine.setAttribute("x1", (bridgeWidthMm - neckWidthMm) / 2);
     nutLine.setAttribute("y1", 0);
-    nutLine.setAttribute("x2", (bridgeWidth + neckWidth) / 2);
+    nutLine.setAttribute("x2", (bridgeWidthMm + neckWidthMm) / 2);
     nutLine.setAttribute("y2", 0);
     nutLine.setAttribute("stroke", "black");
     nutLine.setAttribute("stroke-width", 3);
@@ -193,23 +476,23 @@ const FretCalculator = () => {
     
     // Añadir línea del puente
     const bridgeLine = document.createElementNS(svgNamespace, "line");
-    bridgeLine.setAttribute("x1", (bridgeWidth - fretPositions[fretPositions.length - 1].width) / 2);
-    bridgeLine.setAttribute("y1", scaleLength);
-    bridgeLine.setAttribute("x2", (bridgeWidth + fretPositions[fretPositions.length - 1].width) / 2);
-    bridgeLine.setAttribute("y2", scaleLength);
+    bridgeLine.setAttribute("x1", (bridgeWidthMm - positions[positions.length - 1].width) / 2);
+    bridgeLine.setAttribute("y1", scaleLengthMm);
+    bridgeLine.setAttribute("x2", (bridgeWidthMm + positions[positions.length - 1].width) / 2);
+    bridgeLine.setAttribute("y2", scaleLengthMm);
     bridgeLine.setAttribute("stroke", "black");
     bridgeLine.setAttribute("stroke-width", 3);
     bridgeLine.setAttribute("stroke-linecap", "round");
     g.appendChild(bridgeLine);
     
-    // Información de escala
+    // Información de escala y preset
     const scaleText = document.createElementNS(svgNamespace, "text");
-    scaleText.setAttribute("x", bridgeWidth / 2);
-    scaleText.setAttribute("y", scaleLength + 10);
+    scaleText.setAttribute("x", bridgeWidthMm / 2);
+    scaleText.setAttribute("y", scaleLengthMm + 10);
     scaleText.setAttribute("font-family", "Arial");
     scaleText.setAttribute("font-size", "5");
     scaleText.setAttribute("text-anchor", "middle");
-    scaleText.textContent = `Escala: ${formatMeasurement(scaleLength)} - ${numFrets} trastes`;
+    scaleText.textContent = `${presetName} - Escala: ${formatMeasurement(scaleLengthMm)} - ${numFrets} trastes`;
     g.appendChild(scaleText);
     
     // Añadir el grupo al SVG
@@ -226,7 +509,11 @@ const FretCalculator = () => {
     // Crear un enlace para descargar
     const link = document.createElement('a');
     link.href = url;
-    link.download = `fret_template_${scaleLength}${units === 'mm' ? 'mm' : 'in'}_${numFrets}frets.svg`;
+    
+    // Generar un nombre de archivo basado en el preset seleccionado
+    const presetNameForFile = presetName.replace(/\s+\([^)]*\)/g, '').replace(/\s+/g, '_').toLowerCase();
+    link.download = `trastes_${presetNameForFile}_${formatMeasurement(scaleLengthMm).replace(/[^0-9.]/g, '')}.svg`;
+    
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -240,6 +527,47 @@ const FretCalculator = () => {
   
   // Función para generar y descargar un DXF
   const handleGenerateDXF = () => {
+    // Asegurarse de que los cálculos sean en mm para el DXF
+    let scaleLengthMm = units === 'mm' ? scaleLength : inchesToMm(scaleLength);
+    let neckWidthMm = units === 'mm' ? neckWidth : inchesToMm(neckWidth);
+    let bridgeWidthMm = units === 'mm' ? bridgeWidth : inchesToMm(bridgeWidth);
+    
+    // Recalcular posiciones para el DXF
+    const positions = [];
+    let currentLength = scaleLengthMm;
+    
+    // La posición 0 es la cejuela
+    positions.push({
+      position: 0,
+      distance: 0,
+      width: neckWidthMm
+    });
+    
+    // Calcular cada traste
+    for (let i = 1; i <= numFrets; i++) {
+      const fretDistance = currentLength / FRET_RATIO;
+      const distanceFromNut = scaleLengthMm - fretDistance;
+      
+      // Calcular el ancho interpolando entre el ancho de la cejuela y el puente
+      const widthRatio = distanceFromNut / scaleLengthMm;
+      const width = neckWidthMm + (bridgeWidthMm - neckWidthMm) * widthRatio;
+      
+      positions.push({
+        position: i,
+        distance: distanceFromNut,
+        width: width
+      });
+      
+      currentLength = fretDistance;
+    }
+    
+    // Añadir el puente como último punto
+    positions.push({
+      position: numFrets + 1,
+      distance: scaleLengthMm,
+      width: bridgeWidthMm
+    });
+    
     // Encabezado DXF
     let dxf = "0\nSECTION\n2\nHEADER\n";
     dxf += "9\n$ACADVER\n1\nAC1021\n";
@@ -252,15 +580,15 @@ const FretCalculator = () => {
     // Línea para la cejuela
     dxf += "0\nLINE\n";
     dxf += "8\n0\n";
-    dxf += `10\n${(bridgeWidth - neckWidth) / 2}\n20\n0\n30\n0\n`;
-    dxf += `11\n${(bridgeWidth + neckWidth) / 2}\n21\n0\n31\n0\n`;
+    dxf += `10\n${(bridgeWidthMm - neckWidthMm) / 2}\n20\n0\n30\n0\n`;
+    dxf += `11\n${(bridgeWidthMm + neckWidthMm) / 2}\n21\n0\n31\n0\n`;
     
     // Líneas para los trastes
-    fretPositions.slice(1, -1).forEach((fret) => {
+    positions.slice(1, -1).forEach((fret) => {
       const y = fret.distance;
       const width = fret.width;
-      const x1 = (bridgeWidth - width) / 2;
-      const x2 = (bridgeWidth + width) / 2;
+      const x1 = (bridgeWidthMm - width) / 2;
+      const x2 = (bridgeWidthMm + width) / 2;
       
       dxf += "0\nLINE\n";
       dxf += "8\n0\n";
@@ -269,18 +597,18 @@ const FretCalculator = () => {
     });
     
     // Línea para el puente
-    const lastFret = fretPositions[fretPositions.length - 1];
+    const lastFret = positions[positions.length - 1];
     dxf += "0\nLINE\n";
     dxf += "8\n0\n";
-    dxf += `10\n${(bridgeWidth - lastFret.width) / 2}\n20\n${scaleLength}\n30\n0\n`;
-    dxf += `11\n${(bridgeWidth + lastFret.width) / 2}\n21\n${scaleLength}\n31\n0\n`;
+    dxf += `10\n${(bridgeWidthMm - lastFret.width) / 2}\n20\n${scaleLengthMm}\n30\n0\n`;
+    dxf += `11\n${(bridgeWidthMm + lastFret.width) / 2}\n21\n${scaleLengthMm}\n31\n0\n`;
     
     // Contorno lateral izquierdo
-    let prevX = (bridgeWidth - neckWidth) / 2;
+    let prevX = (bridgeWidthMm - neckWidthMm) / 2;
     let prevY = 0;
     
-    fretPositions.slice(1).forEach((fret) => {
-      const x = (bridgeWidth - fret.width) / 2;
+    positions.slice(1).forEach((fret) => {
+      const x = (bridgeWidthMm - fret.width) / 2;
       const y = fret.distance;
       
       dxf += "0\nLINE\n";
@@ -293,11 +621,11 @@ const FretCalculator = () => {
     });
     
     // Contorno lateral derecho
-    prevX = (bridgeWidth + neckWidth) / 2;
+    prevX = (bridgeWidthMm + neckWidthMm) / 2;
     prevY = 0;
     
-    fretPositions.slice(1).forEach((fret) => {
-      const x = (bridgeWidth + fret.width) / 2;
+    positions.slice(1).forEach((fret) => {
+      const x = (bridgeWidthMm + fret.width) / 2;
       const y = fret.distance;
       
       dxf += "0\nLINE\n";
@@ -319,7 +647,12 @@ const FretCalculator = () => {
     // Crear un enlace para descargar
     const link = document.createElement('a');
     link.href = url;
-    link.download = `fret_template_${scaleLength}${units === 'mm' ? 'mm' : 'in'}_${numFrets}frets.dxf`;
+    
+    // Generar un nombre de archivo basado en el preset seleccionado
+    const presetName = instrumentPresets[selectedPreset].name;
+    const presetNameForFile = presetName.replace(/\s+\([^)]*\)/g, '').replace(/\s+/g, '_').toLowerCase();
+    link.download = `trastes_${presetNameForFile}_${formatMeasurement(scaleLengthMm).replace(/[^0-9.]/g, '')}.dxf`;
+    
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -328,30 +661,84 @@ const FretCalculator = () => {
     URL.revokeObjectURL(url);
   };
   
-  // Función para renderizar el SVG para vista previa
+  // Función para copiar URL compartible al portapapeles
+  const copyShareUrl = () => {
+    navigator.clipboard.writeText(shareUrl).then(
+      () => {
+        alert('¡URL copiada al portapapeles! Ya puedes compartirla.');
+      },
+      (err) => {
+        alert('No se pudo copiar la URL: ' + err);
+      }
+    );
+  };
+  
+  // Función para renderizar el SVG para vista previa (girado 90 grados)
   const renderSvgPreview = () => {
-    // Configuración básica
-    const padding = 20;
-    const svgWidth = bridgeWidth + padding * 2;
-    const svgHeight = scaleLength + padding * 2;
+    // Para la vista previa, siempre trabajamos con valores normalizados para evitar desescalado visual
+    // Convertir todo a mm para normalizar
+    const scaleLengthMm = units === 'mm' ? scaleLength : inchesToMm(scaleLength);
+    const neckWidthMm = units === 'mm' ? neckWidth : inchesToMm(neckWidth);
+    const bridgeWidthMm = units === 'mm' ? bridgeWidth : inchesToMm(bridgeWidth);
+    const fretThicknessMm = units === 'mm' ? fretThickness : inchesToMm(fretThickness);
     
-    // Crear un SVG más simple para la vista previa
+    // Recalcular las posiciones para la vista previa normalizada
+    const positions = [];
+    let currentLength = scaleLengthMm;
+    
+    // La posición 0 es la cejuela
+    positions.push({
+      position: 0,
+      distance: 0,
+      width: neckWidthMm
+    });
+    
+    // Calcular cada traste
+    for (let i = 1; i <= numFrets; i++) {
+      const fretDistance = currentLength / FRET_RATIO;
+      const distanceFromNut = scaleLengthMm - fretDistance;
+      
+      // Calcular el ancho interpolando entre el ancho de la cejuela y el puente
+      const widthRatio = distanceFromNut / scaleLengthMm;
+      const width = neckWidthMm + (bridgeWidthMm - neckWidthMm) * widthRatio;
+      
+      positions.push({
+        position: i,
+        distance: distanceFromNut,
+        width: width
+      });
+      
+      currentLength = fretDistance;
+    }
+    
+    // Añadir el puente como último punto
+    positions.push({
+      position: numFrets + 1,
+      distance: scaleLengthMm,
+      width: bridgeWidthMm
+    });
+    
+    // Configuración básica para la vista previa
+    const padding = 20;
+    
+    // Crear un SVG con la orientación y tamaño correctos
     return (
       <svg 
         width="100%" 
         height="100%" 
-        viewBox={`0 0 ${svgWidth} ${svgHeight}`} 
-        preserveAspectRatio="xMidYMid meet"
+        viewBox={`0 0 ${scaleLengthMm + padding * 2} ${Math.max(bridgeWidthMm, neckWidthMm) + padding * 2}`} 
+        preserveAspectRatio="xMidYMin meet"
       >
-        <g transform={`translate(${padding}, ${padding})`}>
+        {/* Dibujamos el diapasón horizontalmente */}
+        <g transform={`translate(${padding}, ${padding + Math.max(bridgeWidthMm, neckWidthMm) / 2})`}>
           {/* Contorno del mástil */}
           <path 
             d={
-              `M ${(bridgeWidth - neckWidth) / 2} 0 ` + 
-              fretPositions.map(fret => `L ${(bridgeWidth - fret.width) / 2} ${fret.distance} `).join('') +
-              `L ${(bridgeWidth + fretPositions[fretPositions.length - 1].width) / 2} ${scaleLength} ` +
-              [...fretPositions].reverse().slice(1).map(fret => `L ${(bridgeWidth + fret.width) / 2} ${fret.distance} `).join('') +
-              'Z'
+              `M 0 ${-neckWidthMm / 2} ` + 
+              positions.map(fret => `L ${fret.distance} ${-fret.width / 2} `).join('') +
+              `L ${scaleLengthMm} ${-bridgeWidthMm / 2} L ${scaleLengthMm} ${bridgeWidthMm / 2} ` +
+              [...positions].reverse().slice(1).map(fret => `L ${fret.distance} ${fret.width / 2} `).join('') +
+              `L 0 ${neckWidthMm / 2} Z`
             } 
             fill="none" 
             stroke="black" 
@@ -359,25 +746,25 @@ const FretCalculator = () => {
           />
           
           {/* Líneas de trastes */}
-          {fretPositions.slice(1, -1).map((fret, index) => (
+          {positions.slice(1, -1).map((fret, index) => (
             <line 
               key={`fret-${index}`}
-              x1={(bridgeWidth - fret.width) / 2} 
-              y1={fret.distance} 
-              x2={(bridgeWidth + fret.width) / 2} 
-              y2={fret.distance}
+              x1={fret.distance} 
+              y1={-fret.width / 2} 
+              x2={fret.distance} 
+              y2={fret.width / 2}
               stroke="black" 
-              strokeWidth={fretThickness} 
+              strokeWidth={fretThicknessMm} 
               strokeLinecap="round"
             />
           ))}
           
           {/* Cejuela */}
           <line 
-            x1={(bridgeWidth - neckWidth) / 2} 
-            y1={0} 
-            x2={(bridgeWidth + neckWidth) / 2} 
-            y2={0}
+            x1={0} 
+            y1={-neckWidthMm / 2} 
+            x2={0} 
+            y2={neckWidthMm / 2}
             stroke="black" 
             strokeWidth={3} 
             strokeLinecap="round"
@@ -385,24 +772,24 @@ const FretCalculator = () => {
           
           {/* Puente */}
           <line 
-            x1={(bridgeWidth - fretPositions[fretPositions.length - 1].width) / 2} 
-            y1={scaleLength} 
-            x2={(bridgeWidth + fretPositions[fretPositions.length - 1].width) / 2} 
-            y2={scaleLength}
+            x1={scaleLengthMm} 
+            y1={-bridgeWidthMm / 2} 
+            x2={scaleLengthMm} 
+            y2={bridgeWidthMm / 2}
             stroke="black" 
             strokeWidth={3} 
             strokeLinecap="round"
           />
           
           {/* Números de trastes */}
-          {fretPositions.slice(1, -1).map((fret, index) => (
+          {positions.slice(1, -1).map((fret, index) => (
             <text 
               key={`text-${index}`}
-              x={bridgeWidth + 2} 
-              y={fret.distance + 1.5} 
-              fontSize="3"
+              x={fret.distance - 4} 
+              y={-fret.width / 2 - 5} 
+              fontSize="8"
               fill="black" 
-              textAnchor="start"
+              textAnchor="middle"
             >
               {fret.position}
             </text>
@@ -410,13 +797,13 @@ const FretCalculator = () => {
           
           {/* Información de escala */}
           <text 
-            x={bridgeWidth / 2} 
-            y={scaleLength + 10} 
-            fontSize="5"
+            x={scaleLengthMm / 2} 
+            y={bridgeWidthMm / 2 + 15} 
+            fontSize="10"
             fill="black" 
             textAnchor="middle"
           >
-            Escala: {formatMeasurement(scaleLength)} - {numFrets} trastes
+            {instrumentPresets[selectedPreset].name} - Escala: {formatMeasurement(scaleLengthMm)} - {numFrets} trastes
           </text>
         </g>
       </svg>
@@ -424,174 +811,235 @@ const FretCalculator = () => {
   };
   
   return (
-    <div className="max-w-4xl mx-auto p-4 bg-gray-50 rounded-lg shadow">
-      <h1 className="text-2xl font-bold text-center mb-6">Calculadora de Trastes para Instrumentos de Cuerda</h1>
-      
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Panel de controles */}
-        <div className="bg-white p-4 rounded shadow">
-          <h2 className="text-xl font-semibold mb-4">Parámetros</h2>
-          
-          {/* Selector de unidades */}
-          <div className="mb-4">
-            <label className="block text-sm font-medium mb-1">Unidades</label>
-            <div className="flex space-x-4">
-              <button 
-                className={`px-4 py-2 rounded ${units === 'mm' ? 'bg-blue-600 text-white' : 'bg-gray-200'}`}
-                onClick={() => handleUnitChange('mm')}
+    <div className="w-full bg-gray-50 min-h-screen">
+      <div className="w-full max-w-[1600px] mx-auto p-4">
+        <h1 className="text-3xl font-bold text-center mb-6">Calculadora de Trastes para Instrumentos de Cuerda</h1>
+        
+        {/* Vista previa horizontal en la parte superior */}
+        <div className="bg-white p-4 mb-6 rounded shadow overflow-hidden">
+          <h2 className="text-xl font-semibold mb-2">Vista Previa</h2>
+          <div className="border p-2 bg-gray-100 flex justify-center" style={{ height: '250px' }}>
+            <div className="w-full h-full">
+              {fretPositions.length > 0 && renderSvgPreview()}
+            </div>
+          </div>
+          <p className="text-xs text-gray-500 mt-2 text-center">
+            Nota: La vista previa muestra el mástil horizontal para mejor visualización. 
+            Los archivos descargados mantendrán la escala real para impresión.
+          </p>
+        </div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Panel de controles */}
+          <div className="bg-white p-4 rounded shadow">
+            <h2 className="text-xl font-semibold mb-4">Parámetros</h2>
+            
+            {/* Selector de presets */}
+            <div className="mb-4">
+              <label className="block text-sm font-medium mb-1">Instrumento</label>
+              <select 
+                className="w-full p-2 border rounded bg-white"
+                value={selectedPreset}
+                onChange={(e) => handlePresetChange(parseInt(e.target.value))}
               >
-                Milímetros (mm)
-              </button>
-              <button 
-                className={`px-4 py-2 rounded ${units === 'inches' ? 'bg-blue-600 text-white' : 'bg-gray-200'}`}
-                onClick={() => handleUnitChange('inches')}
-              >
-                Pulgadas (in)
-              </button>
+                {instrumentPresets.map((preset, index) => (
+                  <option key={index} value={index}>
+                    {preset.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            
+            {/* Selector de unidades */}
+            <div className="mb-4">
+              <label className="block text-sm font-medium mb-1">Unidades</label>
+              <div className="flex space-x-4">
+                <button 
+                  className={`px-4 py-2 rounded ${units === 'mm' ? 'bg-blue-600 text-white' : 'bg-gray-200'}`}
+                  onClick={() => handleUnitChange('mm')}
+                >
+                  Milímetros (mm)
+                </button>
+                <button 
+                  className={`px-4 py-2 rounded ${units === 'inches' ? 'bg-blue-600 text-white' : 'bg-gray-200'}`}
+                  onClick={() => handleUnitChange('inches')}
+                >
+                  Pulgadas (in)
+                </button>
+              </div>
+            </div>
+            
+            {/* Longitud de escala */}
+            <div className="mb-4">
+              <label className="block text-sm font-medium mb-1">
+                Longitud de escala ({units})
+              </label>
+              <input
+                type="number"
+                step={units === 'mm' ? '1' : '0.01'}
+                value={scaleLength}
+                onChange={(e) => {
+                  setScaleLength(parseFloat(e.target.value));
+                  handleParameterChange();
+                }}
+                className="w-full p-2 border rounded"
+              />
+            </div>
+            
+            {/* Número de trastes */}
+            <div className="mb-4">
+              <label className="block text-sm font-medium mb-1">Número de trastes</label>
+              <input
+                type="number"
+                min="12"
+                max="36"
+                value={numFrets}
+                onChange={(e) => {
+                  setNumFrets(parseInt(e.target.value));
+                  handleParameterChange();
+                }}
+                className="w-full p-2 border rounded"
+              />
+            </div>
+            
+            {/* Ancho del mástil */}
+            <div className="mb-4">
+              <label className="block text-sm font-medium mb-1">
+                Ancho en la cejuela ({units})
+              </label>
+              <input
+                type="number"
+                step={units === 'mm' ? '0.5' : '0.01'}
+                value={neckWidth}
+                onChange={(e) => {
+                  setNeckWidth(parseFloat(e.target.value));
+                  handleParameterChange();
+                }}
+                className="w-full p-2 border rounded"
+              />
+            </div>
+            
+            {/* Ancho en el puente */}
+            <div className="mb-4">
+              <label className="block text-sm font-medium mb-1">
+                Ancho en el puente ({units})
+              </label>
+              <input
+                type="number"
+                step={units === 'mm' ? '0.5' : '0.01'}
+                value={bridgeWidth}
+                onChange={(e) => {
+                  setBridgeWidth(parseFloat(e.target.value));
+                  handleParameterChange();
+                }}
+                className="w-full p-2 border rounded"
+              />
+            </div>
+            
+            {/* Grosor del traste */}
+            <div className="mb-4">
+              <label className="block text-sm font-medium mb-1">
+                Grosor del traste ({units})
+              </label>
+              <input
+                type="number"
+                step="0.1"
+                min="0.5"
+                max="3"
+                value={fretThickness}
+                onChange={(e) => {
+                  setFretThickness(parseFloat(e.target.value));
+                  handleParameterChange();
+                }}
+                className="w-full p-2 border rounded"
+              />
             </div>
           </div>
           
-          {/* Longitud de escala */}
-          <div className="mb-4">
-            <label className="block text-sm font-medium mb-1">
-              Longitud de escala ({units})
-            </label>
-            <input
-              type="number"
-              step={units === 'mm' ? '1' : '0.01'}
-              value={scaleLength}
-              onChange={(e) => setScaleLength(parseFloat(e.target.value))}
-              className="w-full p-2 border rounded"
-            />
-            <p className="text-xs text-gray-500 mt-1">
-              Estándar: Guitarra = {units === 'mm' ? '648mm / 25.5"' : '25.5" / 648mm'}, 
-              Bajo = {units === 'mm' ? '864mm / 34"' : '34" / 864mm'}
-            </p>
-          </div>
-          
-          {/* Número de trastes */}
-          <div className="mb-4">
-            <label className="block text-sm font-medium mb-1">Número de trastes</label>
-            <input
-              type="number"
-              min="12"
-              max="36"
-              value={numFrets}
-              onChange={(e) => setNumFrets(parseInt(e.target.value))}
-              className="w-full p-2 border rounded"
-            />
-          </div>
-          
-          {/* Ancho del mástil */}
-          <div className="mb-4">
-            <label className="block text-sm font-medium mb-1">
-              Ancho en la cejuela ({units})
-            </label>
-            <input
-              type="number"
-              step={units === 'mm' ? '0.5' : '0.01'}
-              value={neckWidth}
-              onChange={(e) => setNeckWidth(parseFloat(e.target.value))}
-              className="w-full p-2 border rounded"
-            />
-          </div>
-          
-          {/* Ancho en el puente */}
-          <div className="mb-4">
-            <label className="block text-sm font-medium mb-1">
-              Ancho en el puente ({units})
-            </label>
-            <input
-              type="number"
-              step={units === 'mm' ? '0.5' : '0.01'}
-              value={bridgeWidth}
-              onChange={(e) => setBridgeWidth(parseFloat(e.target.value))}
-              className="w-full p-2 border rounded"
-            />
-          </div>
-          
-          {/* Grosor del traste */}
-          <div className="mb-4">
-            <label className="block text-sm font-medium mb-1">
-              Grosor del traste ({units})
-            </label>
-            <input
-              type="number"
-              step="0.1"
-              min="0.5"
-              max="3"
-              value={fretThickness}
-              onChange={(e) => setFretThickness(parseFloat(e.target.value))}
-              className="w-full p-2 border rounded"
-            />
-          </div>
-          
-          {/* Botones de descarga */}
-          <div className="mt-6 flex flex-col space-y-2">
-            <button
-              onClick={handleGenerateSVG}
-              className="w-full py-2 bg-green-600 text-white rounded hover:bg-green-700 transition"
-            >
-              Descargar SVG
-            </button>
-            <button
-              onClick={handleGenerateDXF}
-              className="w-full py-2 bg-purple-600 text-white rounded hover:bg-purple-700 transition"
-            >
-              Descargar DXF
-            </button>
+          <div>
+            {/* Botones y acciones */}
+            <div className="bg-white p-4 mb-4 rounded shadow">
+              <h2 className="text-xl font-semibold mb-4">Acciones</h2>
+              
+              {/* Botones de descarga */}
+              <div className="mb-6 flex flex-col space-y-2">
+                <button
+                  onClick={handleGenerateSVG}
+                  className="w-full py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition flex items-center justify-center"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clipRule="evenodd" />
+                  </svg>
+                  Descargar SVG
+                </button>
+                <button
+                  onClick={handleGenerateDXF}
+                  className="w-full py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition flex items-center justify-center"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clipRule="evenodd" />
+                  </svg>
+                  Descargar DXF
+                </button>
+              </div>
+              
+              {/* Compartir configuración */}
+              <div className="border-t pt-4">
+                <h3 className="font-medium mb-2">Compartir esta configuración</h3>
+                <p className="text-sm text-gray-600 mb-3">
+                  Puedes compartir o guardar esta URL para acceder a la misma configuración en el futuro:
+                </p>
+                <div className="flex">
+                  <input 
+                    type="text" 
+                    className="flex-grow p-2 border rounded-l bg-gray-50 text-sm" 
+                    value={shareUrl} 
+                    readOnly 
+                  />
+                  <button 
+                    onClick={copyShareUrl}
+                    className="px-4 py-2 bg-blue-600 text-white rounded-r hover:bg-blue-700 transition"
+                  >
+                    Copiar
+                  </button>
+                </div>
+              </div>
+            </div>
+            
+            {/* Tabla de mediciones */}
+            <div className="bg-white p-4 rounded shadow">
+              <h2 className="text-xl font-semibold mb-2">Mediciones de Trastes</h2>
+              <div className="overflow-x-auto">
+                <table className="min-w-full">
+                  <thead>
+                    <tr className="bg-gray-100">
+                      <th className="px-4 py-2 text-left">Traste</th>
+                      <th className="px-4 py-2 text-left">Distancia</th>
+                      <th className="px-4 py-2 text-left">Ancho</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {fretPositions.map((fret) => (
+                      <tr key={fret.position} className="border-b">
+                        <td className="px-4 py-2">
+                          {fret.position === 0 ? 'Cejuela' : 
+                           fret.position === numFrets + 1 ? 'Puente' : fret.position}
+                        </td>
+                        <td className="px-4 py-2">{formatMeasurement(fret.distance)}</td>
+                        <td className="px-4 py-2">{formatMeasurement(fret.width)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
           </div>
         </div>
         
-        {/* Vista previa y tabla de valores */}
-        <div>
-          {/* Vista previa SVG */}
-          <div className="bg-white p-4 mb-4 rounded shadow overflow-hidden">
-            <h2 className="text-xl font-semibold mb-2">Vista Previa</h2>
-            <div className="border p-2 bg-gray-100 flex justify-center" style={{ minHeight: '300px' }}>
-              <div className="max-w-full h-full">
-                {fretPositions.length > 0 && renderSvgPreview()}
-              </div>
-            </div>
-            <p className="text-xs text-gray-500 mt-2 text-center">
-              Nota: La vista previa no está a escala real en pantalla. 
-              Los archivos descargados sí mantendrán la escala correcta para impresión.
-            </p>
-          </div>
-          
-          {/* Tabla de mediciones */}
-          <div className="bg-white p-4 rounded shadow">
-            <h2 className="text-xl font-semibold mb-2">Mediciones de Trastes</h2>
-            <div className="overflow-x-auto">
-              <table className="min-w-full">
-                <thead>
-                  <tr className="bg-gray-100">
-                    <th className="px-4 py-2 text-left">Traste</th>
-                    <th className="px-4 py-2 text-left">Distancia</th>
-                    <th className="px-4 py-2 text-left">Ancho</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {fretPositions.map((fret) => (
-                    <tr key={fret.position} className="border-b">
-                      <td className="px-4 py-2">
-                        {fret.position === 0 ? 'Cejuela' : 
-                         fret.position === numFrets + 1 ? 'Puente' : fret.position}
-                      </td>
-                      <td className="px-4 py-2">{formatMeasurement(fret.distance)}</td>
-                      <td className="px-4 py-2">{formatMeasurement(fret.width)}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
+        <div className="mt-6 text-center text-sm text-gray-600">
+          <p>Esta herramienta utiliza la fórmula estándar del temperamento igual (12ª raíz de 2) para calcular las posiciones de los trastes.</p>
+          <p>Los archivos SVG generados están configurados a escala real 1:1 para impresión o fabricación.</p>
         </div>
-      </div>
-      
-      <div className="mt-6 text-center text-sm text-gray-600">
-        <p>Esta herramienta utiliza la fórmula estándar del temperamento igual (12ª raíz de 2) para calcular las posiciones de los trastes.</p>
-        <p>Los archivos SVG generados están configurados a escala real 1:1 para impresión o fabricación.</p>
       </div>
     </div>
   );
